@@ -1,11 +1,14 @@
+#define F_CPU 16000000UL
+
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <util/delay.h>
 
-#define NUM_SHAPES 4
+#define NUM_SHAPES 5
 #define ADC_RESOLUTION 1024UL
 #define TIMER1_RESOLUTION 65536UL
 
-enum {SINE, RAMP, TRI, SQU};
+enum {SINE, RAMP, REV_RAMP, TRI, SQU};
 enum {UP, DOWN};
 
 uint8_t sine[128] = {
@@ -58,6 +61,9 @@ ISR (TIMER1_OVF_vect){
   case RAMP:
     PORTD++;
     break;
+  case REV_RAMP:
+    PORTD--;
+    break;
   case TRI:
     switch(direction){
     case UP:
@@ -68,6 +74,7 @@ ISR (TIMER1_OVF_vect){
       break;
     }
     break;
+  default:
   case SQU:
     PORTD = (((++sine_itr)%128) > 63)? 255 : 0;
     break;
@@ -76,43 +83,51 @@ ISR (TIMER1_OVF_vect){
   TCNT1 = freq_setting * (TIMER1_RESOLUTION - 2UL) / ADC_RESOLUTION;
 }
 
-void initADC(){
-  // Select Vref=AVcc
-  ADMUX |= (1<<REFS0);
-  //set prescaler to 128 and enable ADC
-  ADCSRA |= (1<<ADPS2)|(1<<ADPS1)|(1<<ADPS0)|(1<<ADEN);
+ISR (ADC_vect){
+  freq_setting = ADCL | (ADCH << 8);
+  // kick off next conversion
+  ADCSRA |= (1 << ADSC);
 }
 
-uint16_t readADC(uint8_t ADCchannel){
-  //select ADC channel with safety mask
-  ADMUX = (ADMUX & 0xF0) | (ADCchannel & 0x0F);
-  //single conversion mode
-  ADCSRA |= (1<<ADSC);
-  // wait until ADC conversion is complete
-  while( ADCSRA & (1<<ADSC) );
-  return ADC;
+void initADC(){
+  // Select Vref=AVcc
+  ADMUX |= (1 << REFS0);
+  //set prescaler to 128 and enable ADC
+  ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0) | (1 << ADEN) | ( 1<< ADIE);
+  // kick off first conversion
+  ADCSRA |= (1 << ADSC);
 }
 
 void initTimer(){
   // init timer1
   TCCR1A = 0x00;
-  TCCR1B = (1 << CS10);  // Timer mode with no prescler
-  TIMSK1 = (1 << TOIE1);   // Enable timer1 overflow interrupt(TOIE1)
+	TCCR1B = (1 << CS10);  // Timer mode with no prescler
+	TIMSK1 = (1 << TOIE1);   // Enable timer1 overflow interrupt(TOIE1)
   TCNT1 = 0x0;
 }
 
 int main(){
+  DDRC &= ~(1 << PC0) & ~(1 << PC1); // PC0, PC1 inputs
+  PORTC = (1 << PC1); // pullup on PC1, PC0 high Z
+  
+  DDRD = 0xFF; // all outputs
   PORTD = 0x0;
   
-  initADC();
+  initADC(); // for analog frequency input
   
-  initTimer();
+  initTimer(); // for DAC output on PORTD
   
   sei(); // Enable global interrupts by setting global interrupt enable bit in SREG
   
   while(1){
-    // poll ADC input for frequency setting
-    freq_setting = (uint32_t)readADC(0);
+    // poll for button press
+    if(PINB & (1 << PC1)){
+      _delay_ms(20); // debounce
+      if(PINB & (1 << PC1)){
+        shape = (shape + 1)%NUM_SHAPES;
+        while(PINB & (1 << PC1)); // wait for release
+      }
+    }
   }
   return 0;
 }
