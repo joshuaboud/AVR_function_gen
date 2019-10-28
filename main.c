@@ -101,8 +101,8 @@ void initADC(){
 void initTimer(){
   // init timer1
   TCCR1A = 0x00;
-	TCCR1B = (1 << CS10);  // Timer mode with no prescler
-	TIMSK1 = (1 << TOIE1);   // Enable timer1 overflow interrupt(TOIE1)
+  TCCR1B = (1 << CS10);  // Timer mode with no prescler
+  TIMSK1 = (1 << TOIE1);   // Enable timer1 overflow interrupt(TOIE1)
   TCNT1 = 0x0;
 }
 
