@@ -1,3 +1,9 @@
+/* AVR Function Generator
+ * Author: Josh Boudreau 2019
+ * For ATmega328P: R2R DAC on PORTD, momentary button to GND on PC1, pot wiper from 0~5V on PC0.
+ * 16MHz crystal/resonator with no clock prescaler
+ */
+
 #define F_CPU 16000000UL
 
 #include <avr/io.h>
