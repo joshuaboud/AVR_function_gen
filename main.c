@@ -113,6 +113,7 @@ void initTimer(){
 }
 
 int main(){
+  uint8_t db_cnt = 0;
   DDRC &= ~(1 << PC0) & ~(1 << PC1); // PC0, PC1 inputs
   PORTC = (1 << PC1); // pullup on PC1, PC0 high Z
   
@@ -128,12 +129,16 @@ int main(){
   while(1){
     // poll for button press
     if(PINB & (1 << PC1)){
-      _delay_ms(20); // debounce
-      if(PINB & (1 << PC1)){
+      db_cnt++;
+      if(db_cnt >= 4){
         shape = (shape + 1)%NUM_SHAPES;
         while(PINB & (1 << PC1)); // wait for release
+        db_cnt = 0;
       }
+    }else{
+      db_cnt = 0;
     }
+    _delay_ms(10);
   }
   return 0;
 }
