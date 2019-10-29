@@ -90,7 +90,7 @@ ISR (TIMER1_OVF_vect){
 }
 
 ISR (ADC_vect){
-  freq_setting = ADCL | (ADCH << 8);
+  freq_setting = ADC;
   // kick off next conversion
   ADCSRA |= (1 << ADSC);
 }
