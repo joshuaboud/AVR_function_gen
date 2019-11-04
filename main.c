@@ -107,7 +107,7 @@ void initADC(){
 void initTimer(){
   // init timer1
   TCCR1A = 0x00;
-  TCCR1B = (1 << CS10);  // Timer mode with no prescler
+  TCCR1B = (1 << CS10);  // Timer mode with no prescaler
   TIMSK1 = (1 << TOIE1);   // Enable timer1 overflow interrupt(TOIE1)
   TCNT1 = 0x0;
 }
@@ -128,11 +128,11 @@ int main(){
   
   while(1){
     // poll for button press
-    if(PINB & (1 << PC1)){
+    if((PINC & (1 << PC1)) == 0){
       db_cnt++;
       if(db_cnt >= 4){
         shape = (shape + 1)%NUM_SHAPES;
-        while(PINB & (1 << PC1)); // wait for release
+        while((PINC & (1 << PC1)) == 0); // wait for release
         db_cnt = 0;
       }
     }else{
