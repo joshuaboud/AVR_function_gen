@@ -16,7 +16,7 @@ MCU_TARGET  = atmega328p
 OPTIMIZE	   = -Os
 DEFS		   =
 LIBS		   =
-PROGRAMMER = avrispmkII
+PROGRAMMER = usbtiny
 PROG_TARGET = m328p
 PROG_PORT = usb
 # You should not have to change anything below here.
