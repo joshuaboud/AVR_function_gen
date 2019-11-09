@@ -89,7 +89,7 @@ ISR (TIMER1_OVF_vect){
     break;
   }
   // calculate new TCNT1
-  TCNT1 = 65535 - ADC; // if it reaches 65535 it freezes
+  TCNT1 = 65535 - ADC;
 }
 
 void initADC(){
