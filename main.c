@@ -13,6 +13,7 @@
 #define NUM_SHAPES 5
 #define ADC_RESOLUTION 1024UL
 #define TIMER1_RESOLUTION 65536UL
+#define ADCchannel 0
 
 enum {SINE, RAMP, REV_RAMP, TRI, SQU};
 enum {UP, DOWN};
@@ -41,7 +42,6 @@ volatile uint8_t sine_itr = 0;
 volatile uint8_t direction = UP;
 volatile uint8_t shape = SINE;
 volatile uint32_t freq_setting;
-volatile uint8_t adc_cnt = 0;
 
 ISR (TIMER1_OVF_vect){
   switch(shape){
@@ -89,20 +89,16 @@ ISR (TIMER1_OVF_vect){
     break;
   }
   // calculate new TCNT1
-  TCNT1 = 65500 - freq_setting; // if it reaches 65535 it freezes
-  // kick off next conversion
-  if((++adc_cnt) == 0)ADCSRA |= (1 << ADSC); // every 256 times
-}
-
-ISR (ADC_vect){
-  freq_setting = ADC;
+  TCNT1 = 65535 - ADC; // if it reaches 65535 it freezes
 }
 
 void initADC(){
   // Select Vref=AVcc
-  ADMUX |= (1 << REFS0);
-  //set prescaler to 128 and enable ADC
-  ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0) | (1 << ADEN) | ( 1<< ADIE);
+  ADMUX |= 0; //(1 << REFS0);
+  // set prescaler to 128 and enable ADC in auto trigger mode
+  ADCSRA = (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0) | (1 << ADEN) | (1 << ADATE);
+  // trigger source to free running mode
+  ADCSRB = 0;
   // kick off first conversion
   ADCSRA |= (1 << ADSC);
 }
